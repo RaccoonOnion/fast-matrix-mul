@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
             float x = ((float)rand()/(float)(RAND_MAX)) * upper_bound;
             // cout << x << endl;
             buffer += (to_string(x) + " ");
-            if(j%1000000 == 0)
+            if(j%10000 == 0) // for sizes of 64k * 64k set this number to 1M
             {
                 // Write to the file
                 file << buffer;
