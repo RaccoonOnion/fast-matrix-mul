@@ -153,6 +153,32 @@ bool printMat(const Matrix * p)
         printf("]\n");
         return true;
     }
+}
 
+bool initMat(Matrix * p, float * data)
+{
+    if (p == NULL)
+    {
+        fprintf(stderr, RED"The 1st argument you input is a NULL pointer.\n"RESET);
+        return false;
+    }
 
+    if(p->data == NULL)
+    {
+        fprintf(stderr, RED"The data pointer in the matrix struct is a NULL pointer.\n"RESET);
+        return false;
+    }
+
+    if(data == NULL)
+    {
+        fprintf(stderr, RED"The 2nd argument you input is a NULL pointer.\n"RESET);
+        return false;
+    }
+    else
+    {
+        size_t rows = p->rows;
+        size_t cols = p->cols;
+        memcpy(p->data, data, sizeof(float)*rows*cols);
+        return true;
+    }
 }

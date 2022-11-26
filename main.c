@@ -12,9 +12,9 @@ int main()
 
     // write a method for value assignemnt!!
     float m1[6] = {1.0f,2.0f,3.0f,4.0f,5.0f,6.0f};
-    memcpy(matA->data, m1, sizeof(float)*6);
+    initMat(matA, m1);
     printMat(matA);
-    memcpy(matB->data, m1, sizeof(float)*6);
+    initMat(matB, m1);
     printMat(matB);
     if (! matmul_plain(matA, matB, matC))
         fprintf(stderr, "Matrix multiplication failed.\n");

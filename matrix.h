@@ -30,6 +30,7 @@ typedef struct Matrix_{
 } Matrix;
 
 Matrix * createMat(size_t rows, size_t cols);
+bool initMat(Matrix * p, float * data);
 bool releaseMat(Matrix * p);
 bool matmul_plain(const Matrix * input1, const Matrix * input2, Matrix * output);
 bool matmul_improved(const Matrix * input1, const Matrix * input2, Matrix * output);
