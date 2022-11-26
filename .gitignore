@@ -1,0 +1,8 @@
+# Test files
+test*
+
+# Non-source files
+a.out
+
+# VS Code files
+.vscode
