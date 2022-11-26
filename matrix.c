@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "matrix.h"
 
 // return NULL if failed
@@ -120,4 +121,38 @@ bool matmul_plain(const Matrix * input1, const Matrix * input2, Matrix * output)
     }
 
     return true;
+}
+
+bool printMat(const Matrix * p)
+{
+    if (p == NULL)
+    {
+        fprintf(stderr, RED"The pointer you input is a NULL pointer.\n"RESET);
+        return false;
+    }
+
+    if(p->data == NULL)
+    {
+        fprintf(stderr, RED"The data pointer in the matrix struct is a NULL pointer.\n"RESET);
+        return false;
+    }
+    else
+    {
+        size_t rows = p->rows;
+        size_t cols = p->cols;
+        const float * pData = p->data;
+        printf("The Matrix is:\n[");
+        for(size_t i = 0; i < rows * cols; i++)
+        {
+            if(i%cols != 0)
+                printf(", ");
+            else if(i != 0)
+                printf("]\n[");
+            printf("%f", *(pData++));
+        }
+        printf("]\n");
+        return true;
+    }
+
+
 }
