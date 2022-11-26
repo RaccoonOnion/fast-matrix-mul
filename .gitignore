@@ -3,6 +3,6 @@ test*
 
 # Non-source files
 a.out
-./data/*
+data/*
 # VS Code files
 .vscode
