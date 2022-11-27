@@ -35,4 +35,5 @@ bool releaseMat(Matrix * p);
 bool matmul_plain(const Matrix * input1, const Matrix * input2, Matrix * output);
 bool matmul_improved(const Matrix * input1, const Matrix * input2, Matrix * output);
 bool printMat(const Matrix * p);
+Matrix * transposeMat(const Matrix * p);
 #endif

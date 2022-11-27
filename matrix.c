@@ -2,6 +2,12 @@
 #include <string.h>
 #include "matrix.h"
 
+// #include <omp.h>
+//  export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
+//  export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
+
+#include <arm_neon.h>
+
 // return NULL if failed
 Matrix * createMat(size_t rows, size_t cols)
 {
@@ -100,14 +106,6 @@ bool matmul_plain(const Matrix * input1, const Matrix * input2, Matrix * output)
         return false;
     }
 
-    // Plain version of matrix multiplication using loops
-    // type a = ptrMat1->rows;
-    // type b = ptrMat1->cols;
-    // type c = ptrMat2->cols;
-    // type num = a*c;
-
-    // float ptrData[num];
-
     for (int row = 0; row < input1->rows; row++)
     {
         for (int col = 0; col < input2->cols; col++)
@@ -182,4 +180,45 @@ bool initMat(Matrix * p, float * data)
         memcpy(p->data, data, sizeof(float)*rows*cols);
         return true;
     }
+}
+
+Matrix * transposeMat(const Matrix * p);
+
+bool matmul_improved(const Matrix * input1, const Matrix * input2, Matrix * output)
+{
+    
+    for (int row = 0; row < input1->rows; row++)
+    {
+        for (int col = 0; col < input2->cols; col++)
+        {
+            float sum = 0.0f;
+            for (int i = 0; i < input1->cols; i++)
+            {
+                sum += (input1->data[input1->cols * row + i]) * (input2->data[i * input2->cols + col]);
+            }
+            output->data[input2->cols * row + col] = sum;
+        }
+    }
+
+}
+
+Matrix * transposeMat(const Matrix * p)
+{
+    size_t rp = p->rows;
+    size_t cp = p->cols;
+    const float * ptr_p = p->data;
+    size_t l = rp * cp;
+
+    Matrix * t = (Matrix *) malloc(sizeof(Matrix));
+    t->rows = cp;
+    t->cols = rp;
+    t->data = (float *) malloc( l * sizeof(float));
+    float * ptr_t = t->data;
+    
+    for(size_t i = 0; i < l; i++)
+    {
+        // printf("i is %lu, j is %lu\n",i,(i%rp)*cp + (i/rp));
+        *(ptr_t++) = ptr_p[(i%rp)*cp + (i/rp)];
+    }
+    return t;
 }
