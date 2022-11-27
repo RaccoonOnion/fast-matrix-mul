@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
     {
         //tests
         clock_t begin = clock();
-        Matrix * matB = transposeMat(matA);
+        Matrix * matB = transposeMatFast(matA);
         clock_t end = clock();
         double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
         printf("%lfs\n", time_spent);

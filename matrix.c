@@ -2,38 +2,33 @@
 #include <string.h>
 #include "matrix.h"
 
-#include <omp.h>
-//  export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
-//  export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
-
 #include <arm_neon.h>
 
-//#include <cblas.h>
-//export LDFLAGS="-L/opt/homebrew/opt/openblas/lib"
-//export CPPFLAGS="-I/opt/homebrew/opt/openblas/include"
-
-// return NULL if failed
-Matrix * createMat(size_t rows, size_t cols)
+Matrix * createMat(size_t rows, size_t cols) // return NULL if failed
 {
     Matrix * p = NULL;
 
+    // check if rows or cols are zero
     if(rows == 0 || cols == 0)
     {
         fprintf(stderr, RED"rows and/or cols is 0.\n"RESET);
         return NULL;
     }
 
-    // allocate memory
+    // allocate memory for matrix pointer
     p = (Matrix *) malloc(sizeof(Matrix));
     if( p == NULL )
     {
         fprintf(stderr, RED"Failed to allocate memory for a matrix.\n"RESET);
         return NULL;
     }
+
+    // assign value and allocate memory for data pointer
     p->rows = rows;
     p->cols = cols;
     p->data = (float *) malloc( p->rows * p->cols * sizeof(float));
 
+    // return NULL if memory allocation failed
     if(p->data == NULL)
     {
         fprintf(stderr, RED"Failed to allocate memory for the matrix data.\n"RESET);
@@ -46,12 +41,14 @@ Matrix * createMat(size_t rows, size_t cols)
 
 bool releaseMat(Matrix * p)
 {
+    // check if p is NULL
     if (p == NULL)
     {
         fprintf(stderr, RED"The pointer you input is a NULL pointer.\n"RESET);
         return false;
     }
 
+    // check if data pointer is NULL
     if(p->data == NULL)
     {
         fprintf(stderr, RED"The data pointer in the matrix struct is a NULL pointer.\n"RESET);
@@ -65,8 +62,9 @@ bool releaseMat(Matrix * p)
     return true;
 }
 
-bool matmul_plain(const Matrix * input1, const Matrix * input2, Matrix * output)
+bool matmul_plain(const Matrix * input1, const Matrix * input2, Matrix * output) // naive method
 {
+    // Part I input checks
     if(input1 == NULL)
     {
         fprintf(stderr, RED"File %s, Line %d, Function %s(): The 1st parameter is NULL.\n"RESET, __FILE__, __LINE__, __FUNCTION__);
@@ -100,7 +98,7 @@ bool matmul_plain(const Matrix * input1, const Matrix * input2, Matrix * output)
         return false;
     }
 
-    if (input1->rows != output->rows || input2->cols != output->cols || input1->cols != input2->rows)
+    if (input1->rows != output->rows || input2->cols != output->cols || input1->cols != input2->rows) // check for matrices sizes
     {
         fprintf(stderr, RED"The input and output sizes do not match.\n");
         fprintf(stderr, "Their sizes are (%zu, %zu), (%zu, %zu) and (%zu, %zu)\n"RESET,
@@ -110,6 +108,7 @@ bool matmul_plain(const Matrix * input1, const Matrix * input2, Matrix * output)
         return false;
     }
 
+    // Part II matrix multiplication using loops
     for (int row = 0; row < input1->rows; row++)
     {
         for (int col = 0; col < input2->cols; col++)
@@ -126,8 +125,9 @@ bool matmul_plain(const Matrix * input1, const Matrix * input2, Matrix * output)
     return true;
 }
 
-bool printMat(const Matrix * p)
+bool printMat(const Matrix * p) // method to print a matrix
 {
+    // input checks
     if (p == NULL)
     {
         fprintf(stderr, RED"The pointer you input is a NULL pointer.\n"RESET);
@@ -139,7 +139,7 @@ bool printMat(const Matrix * p)
         fprintf(stderr, RED"The data pointer in the matrix struct is a NULL pointer.\n"RESET);
         return false;
     }
-    else
+    else // if input is valid, start printing
     {
         size_t rows = p->rows;
         size_t cols = p->cols;
@@ -158,8 +158,9 @@ bool printMat(const Matrix * p)
     }
 }
 
-bool initMat(Matrix * p, float * data)
+bool initMat(Matrix * p, float * data) //return NULL if failed
 {
+    // input checks
     if (p == NULL)
     {
         fprintf(stderr, RED"The 1st argument you input is a NULL pointer.\n"RESET);
@@ -177,7 +178,7 @@ bool initMat(Matrix * p, float * data)
         fprintf(stderr, RED"The 2nd argument you input is a NULL pointer.\n"RESET);
         return false;
     }
-    else
+    else // we use memcpy to efficiently copy the data
     {
         size_t rows = p->rows;
         size_t cols = p->cols;
@@ -186,9 +187,34 @@ bool initMat(Matrix * p, float * data)
     }
 }
 
-Matrix * transposeMat(const Matrix * p);
+Matrix * transposeMatFast(const Matrix * p)
+{
+    // here we focus on performance so we skip the input checks
 
-float dotproduct(const float * f1, const float * f2, size_t len)
+    //get necessary data
+    size_t rp = p->rows;
+    size_t cp = p->cols;
+    const float * ptr_p = p->data;
+    size_t l = rp * cp;
+
+    // allocate space for the transposed matrix t
+    Matrix * t = (Matrix *) malloc(sizeof(Matrix));
+    t->rows = cp;
+    t->cols = rp;
+    t->data = (float *) malloc( l * sizeof(float));
+    float * ptr_t = t->data;
+
+    // we flatten the loop and use OpenMP to process it paralell
+    #pragma omp parallel for
+    for(size_t i = 0; i < l; i++)
+    {
+        // printf("i is %lu, j is %lu\n",i,(i%rp)*cp + (i/rp));
+        *(ptr_t++) = ptr_p[(i%rp)*cp + (i/rp)];
+    }
+    return t;
+}
+
+float dotproduct(const float * f1, const float * f2, size_t len) // normal method to do dotproduct
 {
     float result = 0.0f;
 
@@ -199,7 +225,7 @@ float dotproduct(const float * f1, const float * f2, size_t len)
     return result;
 }
 
-float dotproduct_neon(const float * p1, const float * p2, size_t n)
+inline float dotproduct_neon(const float * p1, const float * p2, size_t n) // inline method to do dot product using neon
 {
     float sum[4] = {0};
     float32x4_t a, b;
@@ -215,10 +241,14 @@ float dotproduct_neon(const float * p1, const float * p2, size_t n)
     return (sum[0]+sum[1]+sum[2]+sum[3]);
 }
 
-bool matmul_improved(const Matrix * input1, const Matrix * input2, Matrix * output)
+bool matmul_improved(const Matrix * input1, const Matrix * input2, Matrix * output) // improved method
 {
-    // input1: a*b; input2 b*c; input2_T c*b; output: a*c
-    Matrix * input2_T = transposeMat(input2);
+    // Sizes of each matrix: input1: a*b; input2 b*c; input2_T c*b; output: a*c
+    
+    //first transpose matrix2
+    Matrix * input2_T = transposeMatFast(input2);
+
+    // get necessary data
     size_t a = input1->rows;
     size_t b = input1->cols;
     size_t c = input2_T->rows;
@@ -227,34 +257,15 @@ bool matmul_improved(const Matrix * input1, const Matrix * input2, Matrix * outp
     const float * ptr2 = input2_T->data;
     float * ptr_out = output->data; 
 
+    // parallel computation with flattened loops
     #pragma omp parallel for
     for (size_t i = 0; i < l; i++)
     {
         *(ptr_out + i) = dotproduct_neon(( ptr1 + (i/c) * b ),( ptr2 + (i%c) * b ), b);
-        //printf("i is %lu, product is: %f\n",i,dotproduct_neon(( ptr1 + (i/c) * b ),( ptr2 + (i%c) * b ), b));
     }
+
+    // release the transpose matrix!! We don't want memory leaks
     releaseMat(input2_T);
+    
     return true;
-}
-
-Matrix * transposeMat(const Matrix * p)
-{
-    size_t rp = p->rows;
-    size_t cp = p->cols;
-    const float * ptr_p = p->data;
-    size_t l = rp * cp;
-
-    Matrix * t = (Matrix *) malloc(sizeof(Matrix));
-    t->rows = cp;
-    t->cols = rp;
-    t->data = (float *) malloc( l * sizeof(float));
-    float * ptr_t = t->data;
-
-    #pragma omp parallel for
-    for(size_t i = 0; i < l; i++)
-    {
-        // printf("i is %lu, j is %lu\n",i,(i%rp)*cp + (i/rp));
-        *(ptr_t++) = ptr_p[(i%rp)*cp + (i/rp)];
-    }
-    return t;
 }

@@ -75,14 +75,16 @@ int main(int argc, char* argv[])
     matmul_improved(matA, matB, matC);
     matmul_improved(matA, matB, matC);
 
+    double start, end;
+    double runTime;
     //tests
     for (int i = 0; i < 3; i++)
     {
-        clock_t begin = clock();
+        start = omp_get_wtime();
         matmul_improved(matA, matB, matC);
-        clock_t end = clock();
-        double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-        printf("%lfs\n", time_spent);
+        end = omp_get_wtime();
+        runTime = end - start;
+        printf("%g\n",runTime);
 
     }
     //printMat(matC);
