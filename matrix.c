@@ -2,11 +2,15 @@
 #include <string.h>
 #include "matrix.h"
 
-// #include <omp.h>
+#include <omp.h>
 //  export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
 //  export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
 
 #include <arm_neon.h>
+
+//#include <cblas.h>
+//export LDFLAGS="-L/opt/homebrew/opt/openblas/lib"
+//export CPPFLAGS="-I/opt/homebrew/opt/openblas/include"
 
 // return NULL if failed
 Matrix * createMat(size_t rows, size_t cols)
@@ -184,22 +188,53 @@ bool initMat(Matrix * p, float * data)
 
 Matrix * transposeMat(const Matrix * p);
 
+float dotproduct(const float * f1, const float * f2, size_t len)
+{
+    float result = 0.0f;
+
+    for(size_t i = 0; i < len; i++)
+    {
+        result += *(f1++) * *(f2++);
+    }
+    return result;
+}
+
+float dotproduct_neon(const float * p1, const float * p2, size_t n)
+{
+    float sum[4] = {0};
+    float32x4_t a, b;
+    float32x4_t c = vdupq_n_f32(0);
+
+    for (size_t i = 0; i < n; i+=4)
+    {
+        a = vld1q_f32(p1 + i);
+        b = vld1q_f32(p2 + i);
+        c = vaddq_f32(c, vmulq_f32(a, b));
+    }
+    vst1q_f32(sum, c);
+    return (sum[0]+sum[1]+sum[2]+sum[3]);
+}
+
 bool matmul_improved(const Matrix * input1, const Matrix * input2, Matrix * output)
 {
-    
-    for (int row = 0; row < input1->rows; row++)
-    {
-        for (int col = 0; col < input2->cols; col++)
-        {
-            float sum = 0.0f;
-            for (int i = 0; i < input1->cols; i++)
-            {
-                sum += (input1->data[input1->cols * row + i]) * (input2->data[i * input2->cols + col]);
-            }
-            output->data[input2->cols * row + col] = sum;
-        }
-    }
+    // input1: a*b; input2 b*c; input2_T c*b; output: a*c
+    Matrix * input2_T = transposeMat(input2);
+    size_t a = input1->rows;
+    size_t b = input1->cols;
+    size_t c = input2_T->rows;
+    size_t l = a * c;
+    const float * ptr1 = input1->data;
+    const float * ptr2 = input2_T->data;
+    float * ptr_out = output->data; 
 
+    #pragma omp parallel for
+    for (size_t i = 0; i < l; i++)
+    {
+        *(ptr_out + i) = dotproduct_neon(( ptr1 + (i/c) * b ),( ptr2 + (i%c) * b ), b);
+        //printf("i is %lu, product is: %f\n",i,dotproduct_neon(( ptr1 + (i/c) * b ),( ptr2 + (i%c) * b ), b));
+    }
+    releaseMat(input2_T);
+    return true;
 }
 
 Matrix * transposeMat(const Matrix * p)
@@ -214,7 +249,8 @@ Matrix * transposeMat(const Matrix * p)
     t->cols = rp;
     t->data = (float *) malloc( l * sizeof(float));
     float * ptr_t = t->data;
-    
+
+    #pragma omp parallel for
     for(size_t i = 0; i < l; i++)
     {
         // printf("i is %lu, j is %lu\n",i,(i%rp)*cp + (i/rp));

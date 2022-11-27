@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
     Matrix * matA = createMat(size, size);
     initMat(matA, data1);
     printf("MatA init finished!\n");
+    //printMat(matA);
 
 	// Read matrix 2
 	ptr2 = fopen(argv[2], "r");
@@ -63,28 +64,37 @@ int main(int argc, char* argv[])
     Matrix * matB = createMat(size, size);
     initMat(matB, data2);
     printf("MatB init finished!\n");
+    //printMat(matB);
     free(data1);
     free(data2);
 
     Matrix * matC = createMat(size, size);
 
     // warmups
-    // matmul_plain(matA, matB, matC);
-    // matmul_plain(matA, matB, matC);
-    // matmul_plain(matA, matB, matC);
+    matmul_improved(matA, matB, matC);
+    matmul_improved(matA, matB, matC);
+    matmul_improved(matA, matB, matC);
 
     //tests
     for (int i = 0; i < 3; i++)
     {
         clock_t begin = clock();
-        matmul_plain(matA, matB, matC);
+        matmul_improved(matA, matB, matC);
         clock_t end = clock();
         double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
         printf("%lfs\n", time_spent);
+
     }
     //printMat(matC);
     releaseMat(matA);
     releaseMat(matB);
     releaseMat(matC);
 	return 0;
+//[0.254490, 0.952151]
+//[7.832922, 6.014445]
+
+//[15.300124, 10.182752, 8.825740, 13.476320]
+//[37.351601, 17.637680, 8.114429, 34.055958]
+//[34.695450, 22.834732, 10.766151, 24.758505]
+//[24.400372, 24.199692, 19.972271, 28.194981]
 }
