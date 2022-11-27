@@ -7,6 +7,7 @@ time_dgemm.c
 a.out
 main
 gen
+test
 test-plain
 test-improved
 test-openblas
