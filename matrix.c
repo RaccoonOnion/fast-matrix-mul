@@ -49,6 +49,7 @@ bool releaseMat(Matrix * p)
     }
     else
     {
+        free(p->data);
         free(p);
     }
     return true;

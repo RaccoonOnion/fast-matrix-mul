@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
     {
         // Create and open a text file
         ofstream file("./data/dataset-" + to_string(upper_bound) + "-" + to_string(size) + "-" + to_string(i) +".txt");
-        srand(time(nullptr)); // use current time as seed for random generator
+        srand(i); // use i as seed for random generator
         string buffer = "";
         for (size_t j = 0; j < N; j++)
         {
