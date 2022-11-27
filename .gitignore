@@ -1,11 +1,15 @@
 # Test files
 Strassen-Algorithm
-
+test.c
+test2.c
+time_dgemm.c
 # Non-source files
 a.out
 main
 gen
 test-plain
+test-improved
+test-openblas
 # data/dataset-5-1000*
 data/dataset-5-2000*
 data/dataset-5-4000*
