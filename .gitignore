@@ -1,11 +1,17 @@
 # Test files
-test*
+
 
 # Non-source files
 a.out
 main
-data/dataset-5-1000*
+gen
+test-plain
+# data/dataset-5-1000*
+data/dataset-5-2000*
+data/dataset-5-4000*
 data/dataset-5-8000*
+data/dataset-5-16000*
+data/dataset-5-32000*
 data/dataset-5-64000*
 # VS Code files
 .vscode
